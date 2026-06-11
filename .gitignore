@@ -1,0 +1,14 @@
+**/*.img
+**/*.iso
+**/*.sha256
+**/*.sha512
+**/*.bak
+**/*.tmp
+**/bak/
+**/tmp/
+dist/
+mfsbsd/
+installerconfig.d/*.conf
+installerconfig.d/hooks/*.sh
+installerconfig.d/nuageinit/*
+!installerconfig.d/nuageinit/*.sample

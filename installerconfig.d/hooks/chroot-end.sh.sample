@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: BSD 2-Clause
+
+# Power off, instead of reboot, the system
+# to prevent installation loop when running as a bhyve VM.
+if [ "$(sysctl -n kern.vm_guest)" == "bhyve" ] ; then
+  poweroff
+fi
+
+# vim:ft=sh:

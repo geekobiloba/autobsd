@@ -1,0 +1,289 @@
+# SPDX-License-Identifier: BSD 2-Clause
+
+################################################################################
+# Preamble
+################################################################################
+
+#===============================================================================
+# Start dialog
+#===============================================================================
+
+bsddialog \
+  --backtitle    'AutoBSD Start' \
+  --title        'WARNING' \
+  --ok-label     'Yes' \
+  --cancel-label 'No' \
+  --timeout-exit-code 0 \
+  --pause '
+Autoinstallation will start automatically.
+All preexisting data will potentially be lost.
+
+Do you want to continue?
+' \
+  0 0 10
+
+#===============================================================================
+# Configuration
+#===============================================================================
+
+# Export all variables ahead
+set -a
+
+BSDINSTALL_SKIP_KEYMAP="YES"
+BSDINSTALL_SKIP_HOSTNAME="YES"
+BSDINSTALL_SKIP_MANUAL="YES"
+BSDINSTALL_SKIP_SERVICES="YES"
+BSDINSTALL_SKIP_HARDENING="YES"
+BSDINSTALL_SKIP_TIME="YES"
+BSDINSTALL_SKIP_USERS="YES"
+BSDINSTALL_SKIP_FINALCONFIG="YES"
+BSDINSTALL_SKIP_FIRMWARE="YES"
+nonInteractive="YES"
+ASSUME_ALWAYS_YES="YES"
+
+. /etc/installerconfig.d/autobsd.conf
+
+#===============================================================================
+# 1st hook
+#===============================================================================
+
+if [ -r  /etc/installerconfig.d/hooks/preamble-start.sh ] ; then
+  .      /etc/installerconfig.d/hooks/preamble-start.sh
+fi
+
+#===============================================================================
+# Disk
+#===============================================================================
+
+swapoff -a
+
+# Find block devices
+autobsd_disks_found="$(
+  echo $(
+    geom -t |\
+    awk '
+      $2 == "DISK" && $1 !~ /cd/ {
+        print $3
+      }
+    '
+  )
+)"
+
+# Set first found disk
+autobsd_disks_found_first="$(
+  echo ${autobsd_disks_found:-} | awk '{print $1}'
+)"
+
+# Destroy disks partitions
+for disk in ${autobsd_disks:-${autobsd_disks_found}} ; do
+  gpart destroy -F $disk || true
+done
+
+case ${autobsd_filesystem:-default} in
+  (zfs)
+    ZFSBOOT_DISKS="${autobsd_disks:-${autobsd_disks_found}}"
+    ZFSBOOT_VDEV_TYPE="${autobsd_zfsraid:-stripe}"
+
+    if [ -n "${autobsd_swapsize:-}" ] ; then
+      ZFSBOOT_SWAPSIZE="${autobsd_swapsize}"
+
+      if [ "$ZFSBOOT_VDEV_TYPE" == "mirror" ] ; then
+        ZFSBOOT_SWAP_MIRROR="YES"
+      fi
+    fi
+    ;;
+
+  (ufs)
+    if [ -n "${autobsd_swapsize:-}" ] ; then
+      PARTITIONS="${autobsd_disks:-${autobsd_disks_found_first}} GPT { ${autobsd_swapsize} freebsd-swap, auto freebsd-ufs / }"
+    else
+      PARTITIONS="${autobsd_disks:-${autobsd_disks_found_first}} GPT { auto freebsd-ufs / }"
+    fi
+    ;;
+
+  (default) # swap is autoadded at the end of partition
+    PARTITIONS="${autobsd_disks:-${autobsd_disks_found_first}} GPT"
+    ;;
+esac
+
+#===============================================================================
+# Network
+#===============================================================================
+
+autobsd_netif_firstfound="$(
+  # Don't use -u option with ifconfig here, as no interface is already up yet!
+  ifconfig -l ether | awk '{print $1}'
+)"
+
+# Set IP address
+if echo "${autobsd_ifconfig:-DHCP}" | grep -q DHCP ; then
+  sysrc -v ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig:-DHCP}"
+else
+  sysrc -v ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig}"
+fi
+# Set default gateway
+if [ -n "${autobsd_defaultrouter:-}" ] ; then
+  sysrc -v defaultrouter=$autobsd_defaultrouter
+fi
+# Set DNS servers
+if [ -n "${autobsd_dns:-}" ] ; then
+  cat <<EOF > /etc/resolv.conf
+$(
+  for dns in ${autobsd_dns} ; do
+    echo "nameserver $dns"
+  done
+)
+options edns0
+EOF
+fi
+
+service netif   restart
+service routing restart
+
+#===============================================================================
+# 2nd hook
+#===============================================================================
+
+if [ -r  /etc/installerconfig.d/hooks/preamble-end.sh ] ; then
+  .      /etc/installerconfig.d/hooks/preamble-end.sh
+fi
+
+################################################################################
+# chroot setup script
+################################################################################
+
+#!/bin/sh
+
+set -euo pipefail
+
+#===============================================================================
+# 3rd hook
+#===============================================================================
+
+if [ -r  /etc/installerconfig.d/hooks/chroot-start.sh ] ; then
+  .      /etc/installerconfig.d/hooks/chroot-start.sh
+fi
+
+# Create /usr/local subdirectories,
+# which might be missing from base.txz,
+# for smoother file creation with nuageinit user-data write_files.
+mkdir -pv \
+  /usr/local/bin \
+  /usr/local/etc \
+  /usr/local/etc/rc.d \
+  /usr/local/etc/pkg/repos \
+  /usr/local/etc/newsyslog.conf.d
+
+# Clean cruft
+rm -rfv /usr/freebsd-dist
+
+#===============================================================================
+# nuageinit
+#===============================================================================
+
+if [ -d   /etc/installerconfig.d/nuageinit ] ; then
+  cp -Rfv /etc/installerconfig.d/nuageinit /media/nuageinit
+else
+  mkdir -pv /media/nuageinit
+fi
+
+# meta-data
+if [ ! -f     /media/nuageinit/meta-data ] ; then
+  cat <<EOF > /media/nuageinit/meta-data
+local-hostname: ${autobsd_hostname:-freebsd}
+EOF
+fi
+
+# user-data
+if [ ! -f     /media/nuageinit/user-data ] ; then
+  cat <<EOF > /media/nuageinit/user-data
+#cloud-config
+timezone: UTC
+package_update: true
+package_upgrade: true
+EOF
+fi
+
+# network-config
+if [ ! -f /media/nuageinit/network-config ] ; then
+  # Set IP address
+  if echo "${autobsd_ifconfig:-DHCP}" | grep -q DHCP ; then
+    sysrc -v ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig:-DHCP}"
+  else
+    sysrc -v ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig}"
+  fi
+  # Set default gateway
+  if [ -n "${autobsd_defaultrouter:-}" ] ; then
+    sysrc -v defaultrouter=$autobsd_defaultrouter
+  fi
+  # Set DNS servers
+  if [ -n "${autobsd_dns:-}" ] ; then
+    cat <<EOF > /etc/resolv.conf
+$(
+  for dns in ${autobsd_dns} ; do
+    echo "nameserver $dns"
+  done
+)
+options edns0
+EOF
+  fi
+fi
+
+# Initialize nuageinit for next boot
+sysrc -v nuageinit_enable="YES"
+touch /firstboot /firstboot-reboot
+/usr/libexec/nuageinit /media/nuageinit nocloud || true
+
+#===============================================================================
+# pkgbase
+#===============================================================================
+
+if [ "${autobsd_pkgbase:-NO}" == "YES" ] ; then
+  fetch \
+    https://github.com/FreeBSDFoundation/pkgbasify/raw/refs/heads/main/pkgbasify.lua \
+    -o     /tmp/pkgbasify.lua
+  chmod +x /tmp/pkgbasify.lua
+  yes |    /tmp/pkgbasify.lua || true
+  rm -fv   /tmp/pkgbasify.lua
+  pkg clean -a
+fi
+
+#===============================================================================
+# Additional firmware
+#===============================================================================
+
+if [ ${autobsd_fwget:-YES} == "YES" ] ; then
+  fwget
+  pkg clean -a
+fi
+
+#===============================================================================
+# 4th hook
+#===============================================================================
+
+if [ -r  /etc/installerconfig.d/hooks/chroot-end.sh ] ; then
+  .      /etc/installerconfig.d/hooks/chroot-end.sh
+fi
+
+#===============================================================================
+# Finish dialog
+#===============================================================================
+
+bsddialog \
+  --backtitle    'AutoBSD Finish' \
+  --title        'Complete' \
+  --ok-label     'Reboot Now' \
+  --cancel-label 'Open Shell' \
+  --text-escape \
+  --timeout-exit-code 0 \
+  --pause '
+Autoinstallation is complete.
+This system will reboot automatically.
+
+You can choose to reboot now or open a shell in the newly installed system
+to perform additional setup.
+' \
+  0 0 10 \
+|| exec sh
+
+# vim:ft=sh:
