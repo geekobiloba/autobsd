@@ -1,20 +1,21 @@
 # SPDX-License-Identifier: BSD 2-Clause
 
+MAKE_DIR  := ${.PARSEDIR}
 DIST_SITE ?= https://download.freebsd.org/releases
 DIST_ARCH != uname -m
 DIST_VER  != uname -r | sed -E 's,-p[0-9]+$$,,'
 DIST_URL  ?= ${DIST_SITE}/${DIST_ARCH}/${DIST_VER}
-DIST_DIR  ?= ${.CURDIR}/dist
+DIST_DIR  ?= ${MAKE_DIR}/dist
 
 MFSBSD_REPO            ?= https://github.com/mmatuska/mfsbsd.git
-MFSBSD_DIR             ?= ${.CURDIR}/mfsbsd
+MFSBSD_DIR             ?= ${MAKE_DIR}/mfsbsd
 MFSBSD_MFSROOT_MAXSIZE ?= 500m
 
 OUT_NAME  != echo ${DIST_URL} | awk 'BEGIN {FS = "/"; OFS = "-"} {print "AutoBSD", $$(NF-1), $$(NF)}'
 IMG_NAME  ?= ${OUT_NAME}.img
-IMG_PATH  ?= ${.CURDIR}/${IMG_NAME}
+IMG_PATH  ?= ${MAKE_DIR}/${IMG_NAME}
 ISO_NAME  ?= ${OUT_NAME}.iso
-ISO_PATH  ?= ${.CURDIR}/${ISO_NAME}
+ISO_PATH  ?= ${MAKE_DIR}/${ISO_NAME}
 ISO_LABEL != echo ${OUT_NAME} | tr '[[:punct:]]' _ | cut -c 1-32
 
 MAIN_TARGETS += ${DIST_DIR}/MANIFEST
@@ -132,7 +133,11 @@ cleaner: clean
 	rm -rf ${DIST_DIR}
 
 cleanest: cleaner
-	rm -f *.iso *.iso.sha256 *.img *.img.sha256
+	rm -f \
+		${MAKE_DIR}/*.iso \
+		${MAKE_DIR}/*.iso.sha256 \
+		${MAKE_DIR}/*.img \
+		${MAKE_DIR}/*.img.sha256
 
 pristine: cleanest
 
