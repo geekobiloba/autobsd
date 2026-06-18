@@ -2,7 +2,7 @@
 
 DIST_SITE ?= https://download.freebsd.org/releases
 DIST_ARCH != uname -m
-DIST_VER  != uname -r | sed -E 's,-[^-]+$$,,'
+DIST_VER  != uname -r | sed -E 's,-p[0-9]+$$,,'
 DIST_URL  ?= ${DIST_SITE}/${DIST_ARCH}/${DIST_VER}
 DIST_DIR  ?= ${.CURDIR}/dist
 
