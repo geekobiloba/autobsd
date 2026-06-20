@@ -50,7 +50,7 @@ ${ISO_PATH}: ${MAIN_TARGETS} ${MFSBSD_DIR}/Makefile.autobsd
 		ISOLABEL="${ISO_LABEL}" \
 		MFSROOT_MAXSIZE="${MFSBSD_MFSROOT_MAXSIZE}" \
 		iso
-	sha256 "${ISO_PATH}" > "${ISO_PATH}.sha256"
+	sha256 "${ISO_PATH}" | sed -E 's|${ISO_PATH:H}/?||' > "${ISO_PATH}.sha256"
 
 ${IMG_PATH}: ${MAIN_TARGETS} ${MFSBSD_DIR}/Makefile.autobsd
 	make -C ${.ALLSRC:[-1]:H} -f ${.ALLSRC:[-1]} \
@@ -58,7 +58,7 @@ ${IMG_PATH}: ${MAIN_TARGETS} ${MFSBSD_DIR}/Makefile.autobsd
 		IMAGE="${.TARGET}" \
 		MFSROOT_MAXSIZE="${MFSBSD_MFSROOT_MAXSIZE}" \
 		image
-	sha256 "${IMG_PATH}" > "${IMG_PATH}.sha256"
+	sha256 "${IMG_PATH}" | sed -E 's|${IMG_PATH:H}/?||' > "${IMG_PATH}.sha256"
 
 ${DIST_DIR}/MANIFEST:
 	mkdir -pv ${.TARGET:H}
@@ -135,9 +135,9 @@ cleaner: clean
 cleanest: cleaner
 	rm -f \
 		${MAKE_DIR}/*.iso \
-		${MAKE_DIR}/*.iso.sha256 \
+		${MAKE_DIR}/*.iso.sha* \
 		${MAKE_DIR}/*.img \
-		${MAKE_DIR}/*.img.sha256
+		${MAKE_DIR}/*.img.sha*
 
 pristine: cleanest
 
