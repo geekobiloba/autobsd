@@ -325,6 +325,14 @@ write_files:
       add path 'input/*' mode 0660 group operator
       add path 'md*'     mode 0660 group operator
 
+  - path: /etc/ntp.conf
+    append: true
+    content: |
+      #
+      # Listen to localhost only
+      interface listen 127.0.0.1
+      interface listen ::1
+
   - path: /etc/pf.conf
     permissions: '0640'
     content: |
