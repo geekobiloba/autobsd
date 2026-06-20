@@ -126,11 +126,11 @@ runcmd:
   # Lock root password
   - pw usermod -n root -w no
 
-  # # Protect single-user mode with password
-  - >
-    sed -Ei ''
-    's,(unknown[[:space:]]+off[[:space:]]+)(secure),\1in\2,g'
-    /etc/ttys
+  # Protect single-user mode with password
+  # - >
+  #   sed -Ei ''
+  #   's,(unknown[[:space:]]+off[[:space:]]+)(secure),\1in\2,g'
+  #   /etc/ttys
 
   # Users created without password can login without authentication.
   # So, we lock all passwordless non-root, non-system users passwords.

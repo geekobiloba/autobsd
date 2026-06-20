@@ -145,10 +145,5 @@ This is handy on a VPS without any FreeBSD template.
 - [ ]   Test on Raspberry Pi and write the process in the _Tips_ section.
         Using QEMU to build AutoBSD may be easier in this case.
 
-[^pkgbase]: The system will be installed using distribution sets first,
-  then converted to pkgbase
-  using [pkgbasify](https://github.com/FreeBSDFoundation/pkgbasify).
-  This is a temporary measure
-  until `bsdinstall script` defaults to pkgbase in production releases.
-  See: <https://github.com/freebsd/freebsd-src/blob/471fdd91d9156aeab026dc420fb97d97be872d65/UPDATING#L30>.
+[^pkgbase]: Only for FreeBSD 15.1 or above.
 

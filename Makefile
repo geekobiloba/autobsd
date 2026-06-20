@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: BSD 2-Clause
 
 MAKE_DIR  := ${.PARSEDIR}
-DIST_SITE ?= https://download.freebsd.org/releases
+DIST_TYPE != uname -r | grep -q RELEASE && echo releases || echo snapshots
+DIST_SITE := https://download.freebsd.org/${DIST_TYPE}
 DIST_ARCH != uname -m
 DIST_VER  != uname -r | sed -E 's,-p[0-9]+$$,,'
 DIST_URL  ?= ${DIST_SITE}/${DIST_ARCH}/${DIST_VER}

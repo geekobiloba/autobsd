@@ -43,6 +43,16 @@ ASSUME_ALWAYS_YES="YES"
 
 . /etc/installerconfig.d/autobsd.conf
 
+case "${autobsd_pkgbase:-NO}" in
+  (YES)
+    COMPONENTS="kernel base"
+    ;;
+  (NO)
+    DISTRIBUTIONS="kernel.txz base.txz"
+    BSDINSTALL_DISTSITE="https://download.freebsd.org/$(uname -r | grep -q RELEASE && echo releases || echo snapshots)/$(uname -m)/$(uname -r | sed -E 's,-p[0-9]+$,,')"
+    ;;
+esac
+
 #===============================================================================
 # 1st hook
 #===============================================================================
@@ -115,18 +125,25 @@ autobsd_netif_firstfound="$(
   ifconfig -l ether | awk '{print $1}'
 )"
 
-if [ ${autobsd_fwget:-YES} == "YES" ] || [ "${autobsd_pkgbase:-NO}" == "YES" ] ; then
+if   [ "${autobsd_fwget:-YES}"  == "YES" ] \
+  || [ "${autobsd_pkgbase:-NO}" == "YES" ] \
+  || [ ! -f /usr/freebsd-dist/kernel.txz ] \
+  || [ ! -f /usr/freebsd-dist/base.txz   ] \
+  || [ ! -f /usr/freebsd-dist/MANIFEST   ] ; then
   # Set IP address
   if [ -n "${autobsd_netif:-${autobsd_netif_firstfound}}" ] ; then
     if echo "${autobsd_ifconfig:-DHCP}" | grep -q DHCP ; then
-      sysrc -v ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig:-DHCP}"
+      sysrc -vf /etc/rc.conf.d/network \
+        ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig:-SYNCDHCP}"
     else
-      sysrc -v ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig}"
+      sysrc -vf /etc/rc.conf.d/network \
+        ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig}"
     fi
   fi
   # Set default gateway
   if [ -n "${autobsd_defaultrouter:-}" ] ; then
-    sysrc -v defaultrouter=$autobsd_defaultrouter
+    sysrc -vf /etc/rc.conf.d/routing \
+      defaultrouter=$autobsd_defaultrouter
   fi
   # Set DNS servers
   if [ -n "${autobsd_dns_servers:-}" ] ; then
@@ -150,8 +167,10 @@ $(
 )
 EOF
   fi
-  service netif   restart
-  service routing restart
+  service netif restart
+  if ! sysrc -n ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}} | grep -q DHCP ; then
+    service routing restart
+  fi
 fi
 
 #===============================================================================
@@ -204,7 +223,7 @@ fi
 # meta-data
 if [ ! -f     /media/nuageinit/meta-data ] ; then
   cat <<EOF > /media/nuageinit/meta-data
-local-hostname: ${autobsd_hostname:-freebsd}
+hostname: ${autobsd_hostname:-${autobsd_fqdn:-freebsd}}
 EOF
 fi
 
@@ -221,14 +240,17 @@ if [ ! -f /media/nuageinit/network-config ] ; then
   # Set IP address
   if [ -n "${autobsd_netif:-${autobsd_netif_firstfound}}" ] ; then
     if echo "${autobsd_ifconfig:-DHCP}" | grep -q DHCP ; then
-      sysrc -v ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig:-DHCP}"
+      sysrc -vf /etc/rc.conf.d/network \
+        ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig:-SYNCDHCP}"
     else
-      sysrc -v ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig}"
+      sysrc -vf /etc/rc.conf.d/network \
+        ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig}"
     fi
   fi
   # Set default gateway
   if [ -n "${autobsd_defaultrouter:-}" ] ; then
-    sysrc -v defaultrouter=$autobsd_defaultrouter
+    sysrc -vf /etc/rc.conf.d/routing \
+      defaultrouter=$autobsd_defaultrouter
   fi
   # Set DNS servers
   if [ -n "${autobsd_dns_servers:-}" ] ; then
@@ -260,24 +282,10 @@ touch /firstboot /firstboot-reboot
 /usr/libexec/nuageinit /media/nuageinit nocloud || true
 
 #===============================================================================
-# pkgbase
-#===============================================================================
-
-if [ "${autobsd_pkgbase:-NO}" == "YES" ] ; then
-  fetch \
-    https://github.com/FreeBSDFoundation/pkgbasify/raw/refs/heads/main/pkgbasify.lua \
-    -o      /tmp/pkgbasify.lua
-  chmod +xv /tmp/pkgbasify.lua
-  yes |     /tmp/pkgbasify.lua || true
-  rm -fv    /tmp/pkgbasify.lua
-  pkg clean -a
-fi
-
-#===============================================================================
 # Additional firmware
 #===============================================================================
 
-if [ ${autobsd_fwget:-YES} == "YES" ] ; then
+if [ "${autobsd_fwget:-YES}" == "YES" ] ; then
   fwget
   pkg clean -a
 fi

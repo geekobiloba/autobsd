@@ -8,6 +8,14 @@
 #
 autobsd_hostname="freebeastie"
 
+# System FQDN
+#
+# Default: freebsd
+#
+# Alias for autobsd_hostname with lower precedence.
+#
+# autobsd_fqdn="freebeastie.local"
+
 # Boot disks
 #
 # Default: the first found disk for UFS, or all found disks on ZFS
@@ -38,14 +46,7 @@ autobsd_swapsize="2G"
 #
 # Valid value: YES | NO (default)
 #
-# The system will be installed using distribution sets first,
-# then converted to pkgbase using pkgbasify.
-# This is a temporary measure
-# until `bsdinstall script` is default to pkgbase in FreeBSD release.
-#
-# See:
-#   - https://github.com/FreeBSDFoundation/pkgbasify
-#   - https://github.com/freebsd/freebsd-src/blob/471fdd91d9156aeab026dc420fb97d97be872d65/UPDATING#L30
+# Only for FreeBSD 15.1 or above.
 #
 autobsd_pkgbase="YES"
 
@@ -55,17 +56,17 @@ autobsd_pkgbase="YES"
 #
 autobsd_fwget="YES"
 
-# IP configuration
-#
-# Default: DHCP
-#
-# autobsd_ifconfig="inet 10.20.30.40/24"
-
 # Outbound network interface
 #
 # Default: the first found network interface
 #
 # autobsd_netif="vtnet0"
+
+# IP configuration
+#
+# Default: DHCP
+#
+# autobsd_ifconfig="inet 10.20.30.40/24"
 
 # Default gateway
 #
@@ -109,6 +110,6 @@ autobsd_fwget="YES"
 #
 # Only parsed when autobsd_dns_servers is defined.
 #
-# autobsd_dns_servers="edns0 rotate"
+# autobsd_dns_options="edns0 rotate"
 
 # vim:ft=sh:
