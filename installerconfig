@@ -145,28 +145,24 @@ if   [ "${autobsd_fwget:-YES}"  == "YES" ] \
     sysrc -vf /etc/rc.conf.d/routing \
       defaultrouter=$autobsd_defaultrouter
   fi
-  # Set DNS servers
-  if [ -n "${autobsd_dns_servers:-}" ] ; then
-    cat <<EOF > /etc/resolv.conf
-$(
-  for dns in ${autobsd_dns_servers} ; do
-    echo "nameserver $dns"
-  done
-  if [ -n "${autobsd_dns_domain}" ] ; then
-    echo "domain ${autobsd_dns_domain}"
-  fi
-  if [ -n "${autobsd_dns_search}" ] ; then
-    echo "search ${autobsd_dns_search}"
-  fi
-  if [ -n "${autobsd_dns_sortlist}" ] ; then
-    echo "sortlist ${autobsd_dns_sortlist}"
-  fi
-  if [ -n "${autobsd_dns_options}" ] ; then
-    echo "options ${autobsd_dns_options}"
-  fi
-)
-EOF
-  fi
+  # Set DNS config
+  {
+    for dns in ${autobsd_dns_servers:-} ; do
+      echo "nameserver $dns"
+    done
+    if [ -n "${autobsd_dns_domain:-}" ] ; then
+      echo "domain ${autobsd_dns_domain}"
+    fi
+    if [ -n "${autobsd_dns_search:-}" ] ; then
+      echo "search ${autobsd_dns_search}"
+    fi
+    if [ -n "${autobsd_dns_sortlist:-}" ] ; then
+      echo "sortlist ${autobsd_dns_sortlist}"
+    fi
+    if [ -n "${autobsd_dns_options:-}" ] ; then
+      echo "options ${autobsd_dns_options}"
+    fi
+  } > /etc/resolv.conf
   service netif restart
   if ! sysrc -n ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}} | grep -q DHCP ; then
     service routing restart
@@ -252,28 +248,24 @@ if [ ! -f /media/nuageinit/network-config ] ; then
     sysrc -vf /etc/rc.conf.d/routing \
       defaultrouter=$autobsd_defaultrouter
   fi
-  # Set DNS servers
-  if [ -n "${autobsd_dns_servers:-}" ] ; then
-    cat <<EOF > /etc/resolv.conf
-$(
-  for dns in ${autobsd_dns_servers} ; do
-    echo "nameserver $dns"
-  done
-  if [ -n "${autobsd_dns_domain}" ] ; then
-    echo "domain ${autobsd_dns_domain}"
-  fi
-  if [ -n "${autobsd_dns_search}" ] ; then
-    echo "search ${autobsd_dns_search}"
-  fi
-  if [ -n "${autobsd_dns_sortlist}" ] ; then
-    echo "sortlist ${autobsd_dns_sortlist}"
-  fi
-  if [ -n "${autobsd_dns_options}" ] ; then
-    echo "options ${autobsd_dns_options}"
-  fi
-)
-EOF
-  fi
+  # Set DNS config
+  {
+    for dns in ${autobsd_dns_servers:-} ; do
+      echo "nameserver $dns"
+    done
+    if [ -n "${autobsd_dns_domain:-}" ] ; then
+      echo "domain ${autobsd_dns_domain}"
+    fi
+    if [ -n "${autobsd_dns_search:-}" ] ; then
+      echo "search ${autobsd_dns_search}"
+    fi
+    if [ -n "${autobsd_dns_sortlist:-}" ] ; then
+      echo "sortlist ${autobsd_dns_sortlist}"
+    fi
+    if [ -n "${autobsd_dns_options:-}" ] ; then
+      echo "options ${autobsd_dns_options}"
+    fi
+  } > /etc/resolv.conf
 fi
 
 # Initialize nuageinit for next boot
