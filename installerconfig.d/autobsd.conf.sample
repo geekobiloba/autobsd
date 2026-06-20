@@ -2,15 +2,41 @@
 
 # System hostname
 #
-# Default: freebsd.
+# Default: freebsd
 #
 # Hostname can also be set via nuageinit meta-data.
 #
 autobsd_hostname="freebeastie"
 
-# Prefer pkgbase installation type to distribution sets.
+# Boot disks
 #
-# Valid value: YES | NO (default).
+# Default: the first found disk for UFS, or all found disks on ZFS
+#
+# autobsd_disks="da0 da1"
+
+# Boot file system
+#
+# Valid value: ufs (default) | zfs
+#
+autobsd_filesystem="ufs"
+
+# ZFS vdev type
+#
+# Valid value: stripe (default) | mirror | raid10 | raidz1 | raidz2 | raidz3
+#
+# See: ZFSBOOT_VDEV_TYPE on bsdinstall(8)
+#
+# autobsd_zfsraid="stripe"
+
+# Swap partition size
+#
+# Default: no swap partition
+#
+autobsd_swapsize="2G"
+
+# Prefer pkgbase installation type to distribution sets
+#
+# Valid value: YES | NO (default)
 #
 # The system will be installed using distribution sets first,
 # then converted to pkgbase using pkgbasify.
@@ -23,55 +49,66 @@ autobsd_hostname="freebeastie"
 #
 autobsd_pkgbase="YES"
 
-# Boot disks
+# Install additional firmware with fwget
 #
-# Default: the first found disk for UFS, or all found disks on ZFS.
+# Valid value: YES (default) | NO
 #
-# autobsd_disks="da0 da1"
-
-# Boot file system
-#
-# Valid value: ufs (default) | zfs.
-#
-autobsd_filesystem="ufs"
-
-# ZFS vdev type
-#
-# Valid value: stripe (default) | mirror | raid10 | raidz1 | raidz2 | raidz3.
-#
-# See: ZFSBOOT_VDEV_TYPE on bsdinstall(8)
-#
-# autobsd_zfsraid="stripe"
-
-# Swap partition size
-#
-# Default: no swap partition
-#
-autobsd_swapsize="2G"
+autobsd_fwget="YES"
 
 # IP configuration
 #
-# Default: DHCP.
+# Default: DHCP
 #
 # autobsd_ifconfig="inet 10.20.30.40/24"
 
 # Outbound network interface
 #
-# Default: the first found network interface.
+# Default: the first found network interface
 #
 # autobsd_netif="vtnet0"
 
-# Default gateway & DNS servers
+# Default gateway
 #
-# Default: none, use values acquired via DHCP.
+# Default: none
 #
 # autobsd_defaultrouter="10.20.30.1"
-# autobsd_dns="1.1.1.1 8.8.8.8 9.9.9.9"
 
-# Install additional firmware with fwget
+# DNS servers
 #
-# Valid valus: YES (default) | NO
+# Default: none
 #
-autobsd_fwget="YES"
+# autobsd_dns_servers="1.1.1.1 8.8.8.8 9.9.9.9"
+
+# DNS domain
+#
+# Default: none
+#
+# Only parsed when autobsd_dns_servers is defined.
+#
+# autobsd_dns_domain="home.lab"
+
+# DNS search
+#
+# Default: none
+#
+# Only parsed when autobsd_dns_servers is defined.
+#
+# autobsd_dns_search="home.lab"
+
+# DNS sortlist
+#
+# Default: none
+#
+# Only parsed when autobsd_dns_servers is defined.
+#
+# autobsd_dns_sortlist="10.9.1.0/255.255.240.0 10.9.0.0/255.255.0.0"
+
+# DNS options
+#
+# Default: none
+#
+# Only parsed when autobsd_dns_servers is defined.
+#
+# autobsd_dns_servers="edns0 rotate"
 
 # vim:ft=sh:

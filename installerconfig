@@ -47,8 +47,8 @@ ASSUME_ALWAYS_YES="YES"
 # 1st hook
 #===============================================================================
 
-if [ -r  /etc/installerconfig.d/hooks/preamble-start.sh ] ; then
-  .      /etc/installerconfig.d/hooks/preamble-start.sh
+if [ -r /etc/installerconfig.d/hooks/preamble-start.sh ] ; then
+  .     /etc/installerconfig.d/hooks/preamble-start.sh
 fi
 
 #===============================================================================
@@ -115,37 +115,51 @@ autobsd_netif_firstfound="$(
   ifconfig -l ether | awk '{print $1}'
 )"
 
-# Set IP address
-if echo "${autobsd_ifconfig:-DHCP}" | grep -q DHCP ; then
-  sysrc -v ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig:-DHCP}"
-else
-  sysrc -v ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig}"
-fi
-# Set default gateway
-if [ -n "${autobsd_defaultrouter:-}" ] ; then
-  sysrc -v defaultrouter=$autobsd_defaultrouter
-fi
-# Set DNS servers
-if [ -n "${autobsd_dns:-}" ] ; then
-  cat <<EOF > /etc/resolv.conf
+if [ ${autobsd_fwget:-YES} == "YES" ] || [ "${autobsd_pkgbase:-NO}" == "YES" ] ; then
+  # Set IP address
+  if [ -n "${autobsd_netif:-${autobsd_netif_firstfound}}" ] ; then
+    if echo "${autobsd_ifconfig:-DHCP}" | grep -q DHCP ; then
+      sysrc -v ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig:-DHCP}"
+    else
+      sysrc -v ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig}"
+    fi
+  fi
+  # Set default gateway
+  if [ -n "${autobsd_defaultrouter:-}" ] ; then
+    sysrc -v defaultrouter=$autobsd_defaultrouter
+  fi
+  # Set DNS servers
+  if [ -n "${autobsd_dns_servers:-}" ] ; then
+    cat <<EOF > /etc/resolv.conf
 $(
-  for dns in ${autobsd_dns} ; do
+  for dns in ${autobsd_dns_servers} ; do
     echo "nameserver $dns"
   done
+  if [ -n "${autobsd_dns_domain}" ] ; then
+    echo "domain ${autobsd_dns_domain}"
+  fi
+  if [ -n "${autobsd_dns_search}" ] ; then
+    echo "search ${autobsd_dns_search}"
+  fi
+  if [ -n "${autobsd_dns_sortlist}" ] ; then
+    echo "sortlist ${autobsd_dns_sortlist}"
+  fi
+  if [ -n "${autobsd_dns_options}" ] ; then
+    echo "options ${autobsd_dns_options}"
+  fi
 )
-options edns0
 EOF
+  fi
+  service netif   restart
+  service routing restart
 fi
-
-service netif   restart
-service routing restart
 
 #===============================================================================
 # 2nd hook
 #===============================================================================
 
-if [ -r  /etc/installerconfig.d/hooks/preamble-end.sh ] ; then
-  .      /etc/installerconfig.d/hooks/preamble-end.sh
+if [ -r /etc/installerconfig.d/hooks/preamble-end.sh ] ; then
+  .     /etc/installerconfig.d/hooks/preamble-end.sh
 fi
 
 ################################################################################
@@ -160,8 +174,8 @@ set -euo pipefail
 # 3rd hook
 #===============================================================================
 
-if [ -r  /etc/installerconfig.d/hooks/chroot-start.sh ] ; then
-  .      /etc/installerconfig.d/hooks/chroot-start.sh
+if [ -r /etc/installerconfig.d/hooks/chroot-start.sh ] ; then
+  .     /etc/installerconfig.d/hooks/chroot-start.sh
 fi
 
 # Create /usr/local subdirectories,
@@ -199,32 +213,43 @@ if [ ! -f     /media/nuageinit/user-data ] ; then
   cat <<EOF > /media/nuageinit/user-data
 #cloud-config
 timezone: UTC
-package_update: true
-package_upgrade: true
 EOF
 fi
 
 # network-config
 if [ ! -f /media/nuageinit/network-config ] ; then
   # Set IP address
-  if echo "${autobsd_ifconfig:-DHCP}" | grep -q DHCP ; then
-    sysrc -v ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig:-DHCP}"
-  else
-    sysrc -v ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig}"
+  if [ -n "${autobsd_netif:-${autobsd_netif_firstfound}}" ] ; then
+    if echo "${autobsd_ifconfig:-DHCP}" | grep -q DHCP ; then
+      sysrc -v ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig:-DHCP}"
+    else
+      sysrc -v ifconfig_${autobsd_netif:-${autobsd_netif_firstfound}}="${autobsd_ifconfig}"
+    fi
   fi
   # Set default gateway
   if [ -n "${autobsd_defaultrouter:-}" ] ; then
     sysrc -v defaultrouter=$autobsd_defaultrouter
   fi
   # Set DNS servers
-  if [ -n "${autobsd_dns:-}" ] ; then
+  if [ -n "${autobsd_dns_servers:-}" ] ; then
     cat <<EOF > /etc/resolv.conf
 $(
-  for dns in ${autobsd_dns} ; do
+  for dns in ${autobsd_dns_servers} ; do
     echo "nameserver $dns"
   done
+  if [ -n "${autobsd_dns_domain}" ] ; then
+    echo "domain ${autobsd_dns_domain}"
+  fi
+  if [ -n "${autobsd_dns_search}" ] ; then
+    echo "search ${autobsd_dns_search}"
+  fi
+  if [ -n "${autobsd_dns_sortlist}" ] ; then
+    echo "sortlist ${autobsd_dns_sortlist}"
+  fi
+  if [ -n "${autobsd_dns_options}" ] ; then
+    echo "options ${autobsd_dns_options}"
+  fi
 )
-options edns0
 EOF
   fi
 fi
@@ -241,10 +266,10 @@ touch /firstboot /firstboot-reboot
 if [ "${autobsd_pkgbase:-NO}" == "YES" ] ; then
   fetch \
     https://github.com/FreeBSDFoundation/pkgbasify/raw/refs/heads/main/pkgbasify.lua \
-    -o     /tmp/pkgbasify.lua
-  chmod +x /tmp/pkgbasify.lua
-  yes |    /tmp/pkgbasify.lua || true
-  rm -fv   /tmp/pkgbasify.lua
+    -o      /tmp/pkgbasify.lua
+  chmod +xv /tmp/pkgbasify.lua
+  yes |     /tmp/pkgbasify.lua || true
+  rm -fv    /tmp/pkgbasify.lua
   pkg clean -a
 fi
 
@@ -261,8 +286,8 @@ fi
 # 4th hook
 #===============================================================================
 
-if [ -r  /etc/installerconfig.d/hooks/chroot-end.sh ] ; then
-  .      /etc/installerconfig.d/hooks/chroot-end.sh
+if [ -r /etc/installerconfig.d/hooks/chroot-end.sh ] ; then
+  .     /etc/installerconfig.d/hooks/chroot-end.sh
 fi
 
 #===============================================================================
