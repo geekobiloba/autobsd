@@ -292,6 +292,7 @@ write_files:
     defer: true
     content: |
       ntpd_enable="YES"
+      ntpd_config="/etc/ntp.conf.local"
       ntpd_sync_on_start="YES"
       moused_enable="YES"
       dumpdev="NO"
@@ -325,11 +326,12 @@ write_files:
       add path 'input/*' mode 0660 group operator
       add path 'md*'     mode 0660 group operator
 
-  - path: /etc/ntp.conf
+  - path: /etc/ntp.conf.local
     append: true
     content: |
-      #
-      # Listen to localhost only
+      includefile /etc/ntp.conf
+
+      interface ignore wildcard
       interface listen 127.0.0.1
       interface listen ::1
 
