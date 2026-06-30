@@ -18,6 +18,7 @@ IMG_PATH  ?= ${MAKE_DIR}/${IMG_NAME}
 ISO_NAME  ?= ${OUT_NAME}.iso
 ISO_PATH  ?= ${MAKE_DIR}/${ISO_NAME}
 ISO_LABEL != echo ${OUT_NAME} | tr '[[:punct:]]' _ | cut -c 1-32
+ISO_HOOK  ?= ${MFSBSD_DIR}/customfiles/etc/installerconfig.d/hooks/chroot-end.sh
 
 MAIN_TARGETS += ${DIST_DIR}/MANIFEST
 MAIN_TARGETS += ${DIST_DIR}/kernel.txz
@@ -44,7 +45,7 @@ iso: ${ISO_PATH}
 
 img: ${IMG_PATH}
 
-${ISO_PATH}: ${MAIN_TARGETS} ${MFSBSD_DIR}/Makefile.autobsd
+${ISO_PATH}: ${MAIN_TARGETS} ${ISO_HOOK} ${MFSBSD_DIR}/Makefile.autobsd
 	make -C ${.ALLSRC:[-1]:H} -f ${.ALLSRC:[-1]} \
 		BASE="${DIST_DIR}" \
 		ISOIMAGE="${.TARGET}" \
@@ -60,6 +61,9 @@ ${IMG_PATH}: ${MAIN_TARGETS} ${MFSBSD_DIR}/Makefile.autobsd
 		MFSROOT_MAXSIZE="${MFSBSD_MFSROOT_MAXSIZE}" \
 		image
 	sha256 "${IMG_PATH}" | sed -E 's|${IMG_PATH:H}/?||' > "${IMG_PATH}.sha256"
+
+${ISO_HOOK}: ${.TARGET}.sample
+	cp -Lv ${.ALLSRC:[1]} ${.TARGET}
 
 ${DIST_DIR}/MANIFEST:
 	mkdir -pv ${.TARGET:H}

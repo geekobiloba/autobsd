@@ -26,7 +26,13 @@ all with these options:
 
 3.  Edit the resulting files to suit your needs.
 
-4.  Build AutoBSD:
+4.  Ensure the environment is clean:
+
+    ```shell
+    doas make pristine
+    ```
+
+5.  Build AutoBSD:
 
     -   as an ISO:
 

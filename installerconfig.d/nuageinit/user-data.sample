@@ -531,7 +531,7 @@ write_files:
       alias aria2c="aria2c --file-allocation=none"
 
       # Enable alias after doas/sudo
-      if [ -x /usr/local/bin/doas ] ; then
+      if   [ -x /usr/local/bin/doas ] ; then
         alias doas="doas "
         alias sudo="doas "
       elif [ -x /usr/local/bin/sudo ] ; then
