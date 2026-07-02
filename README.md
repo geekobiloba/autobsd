@@ -112,8 +112,8 @@ Offline installation is possible with these snippets:
 2.  `installerconfig.d/nuageinit/user-data`
 
     ```yaml
-    package_update: true
-    package_upgrade: true
+    package_update: no
+    package_upgrade: no
     packages: []
     ```
 

@@ -4,7 +4,7 @@
 #
 # Default: freebsd
 #
-# Hostname can also be set via nuageinit meta-data.
+# Can also be set via nuageinit meta-data.
 #
 autobsd_hostname="freebeastie"
 
