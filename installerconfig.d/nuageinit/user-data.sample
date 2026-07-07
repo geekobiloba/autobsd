@@ -319,8 +319,13 @@ write_files:
       pf_fallback_rules_enable="YES"
       pf_fallback_rules_file="/etc/pf-fallback.conf"
 
-  - path: /etc/devfs.rules.local
+  - path: /etc/devfs.rules
     append: true
+    content: |
+      # Placeholder content to be overridden by other program setup,
+      # like bastille.
+
+  - path: /etc/devfs.rules.local
     content: |
       [localrules=1000]
       add path 'usb/*'   mode 0660 group operator
