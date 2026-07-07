@@ -301,6 +301,7 @@ write_files:
 
       # devfs
       devfs_system_ruleset="localrules"
+      devfs_system_rulesets="/etc/defaults/devfs.rules /etc/devfs.rules /etc/devfs.rules.local"
 
       # SSHd
       sshd_enable="YES"
@@ -318,10 +319,10 @@ write_files:
       pf_fallback_rules_enable="YES"
       pf_fallback_rules_file="/etc/pf-fallback.conf"
 
-  - path: /etc/devfs.rules
+  - path: /etc/devfs.rules.local
     append: true
     content: |
-      [localrules=10]
+      [localrules=1000]
       add path 'usb/*'   mode 0660 group operator
       add path 'input/*' mode 0660 group operator
       add path 'md*'     mode 0660 group operator
