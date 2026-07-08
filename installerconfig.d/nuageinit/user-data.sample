@@ -291,8 +291,8 @@ write_files:
       syslogd_flags="-ss"
 
       # devfs
+      devfs_rulesets="/etc/defaults/devfs.rules /etc/devfs.rules /etc/devfs.rules.local"
       devfs_system_ruleset="localrules"
-      devfs_system_rulesets="/etc/defaults/devfs.rules /etc/devfs.rules /etc/devfs.rules.local"
 
       # SSHd
       sshd_enable="YES"
