@@ -202,24 +202,15 @@ runcmd:
   # Network
   ##############################################################################
 
+  # The first found interface
   - INTERFACE="$(ifconfig -l ether | awk '{print $1}')"
 
+  # Set PF interface to the first found network interface,
+  # or disable PF when none is found.
   - |
     if [ -n "$INTERFACE" ] ; then
-      # Set default interface,
-      # and remove ifconfig_DEFAULT
-      # to keep it from configuring unconfigured interfaces.
-      if sysrc -nq ifconfig_DEFAULT >/dev/null 2>&1 ; then
-        if sysrc -nq ifconfig_$INTERFACE >/dev/null 2>&1 ; then
-          sysrc -v  ifconfig_$INTERFACE="$(sysrc -n ifconfig_DEFAULT)"
-          sysrc -vx ifconfig_DEFAULT
-        fi
-      fi
-
-      # PF
       sed -i '' s,%INTERFACE%,$INTERFACE, /etc/pf.conf
     else
-      # Disable PF if when no network interface found
       sysrc -vf /etc/rc.conf.local pf_enable="NO"
     fi
 
