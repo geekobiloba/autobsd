@@ -75,11 +75,11 @@ autobsd_disks_found="$(
       $2 == "DISK" && $1 !~ /cd/ {
         print $3
       }
-    '
+    ' | sort
   )
 )"
 
-# Set first found disk
+# Set first found disk with the lowest index
 autobsd_disks_found_first="$(
   echo ${autobsd_disks_found:-} | awk '{print $1}'
 )"

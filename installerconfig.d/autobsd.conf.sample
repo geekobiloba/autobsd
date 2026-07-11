@@ -18,7 +18,7 @@ autobsd_hostname="freebeastie"
 
 # Boot disks
 #
-# Default: the first found disk for UFS, or all found disks on ZFS
+# Default: the first found disk with the lowest index for UFS, or all found disks on ZFS
 #
 # autobsd_disks="da0 da1"
 
