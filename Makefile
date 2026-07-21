@@ -146,4 +146,6 @@ cleanest: cleaner
 
 pristine: cleanest
 
+.PHONY: all clean cleaner cleanest pristine
+
 # vim:ft=make:
