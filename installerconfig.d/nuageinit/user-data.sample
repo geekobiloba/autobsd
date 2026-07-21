@@ -433,6 +433,7 @@ write_files:
       export     LESS="-Ri"
       export    PAGER="less"
       export MANPAGER="less -Ri --use-color -Dd+r -Du+Y -DN+g"
+      export HISTTIMEFORMAT="%F %T "
 
       export LSCOLORS="Gxfxcxdxbxegedabagacad" # lighter directory color
       export IFCONFIG_FORMAT="cidr"
