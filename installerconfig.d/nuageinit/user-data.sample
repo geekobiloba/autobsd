@@ -23,6 +23,7 @@ packages:
   - cmdwatch
   - colorize
   - curl
+  - dasel
   - fastfetch
   - fd-find
   - fzf
@@ -35,6 +36,7 @@ packages:
   - jq
   - jsonnet
   - lolcat
+  - misc/py-crudini # like dasel, but for INI files
   - mtr-nox11
   - nmap
   - ookla-speedtest
